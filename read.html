@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%232c376b'/><g transform='translate(32,30)' stroke='%23E8CD7C' stroke-width='3' fill='none' stroke-linecap='round'><circle cx='0' cy='0' r='3.4' fill='%23E8CD7C' stroke='none'/><path d='M8 -7 A11 11 0 0 1 8 7'/><path d='M15 -13 A20 20 0 0 1 15 13'/><path d='M-8 -7 A11 11 0 0 0 -8 7'/><path d='M-15 -13 A20 20 0 0 0 -15 13'/></g></svg>">
+<title>One Mantra — Read &amp; Listen</title>
+<style>
+  :root{
+    --indigo:#2c376b; --indigo-2:#3b4a8a; --indigo-soft:#e7e9f5;
+    --gold:#c2922e; --gold-2:#e8cd7c;
+    --cream:#fbf7ee; --cream-2:#eef0f8; --panel:#fffdf8;
+    --ink:#20242e; --muted:#5d6376; --rule:#e3e1d2;
+    --hl:#fbeec3; --hl-edge:#e3c264;
+  }
+  [data-theme="dark"]{
+    --indigo:#26304f; --indigo-2:#9aa6e6; --indigo-soft:#222842;
+    --gold:#e2b75c; --gold-2:#e8cd7c;
+    --cream:#13151c; --cream-2:#1a1d27; --panel:#1b1e28;
+    --ink:#eee9da; --muted:#a6abba; --rule:rgba(238,233,218,.14);
+    --hl:#3a3414; --hl-edge:#6a5a1f;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0; height:100%}
+  body{
+    background:var(--cream); color:var(--ink);
+    font-family:"Palatino Linotype","Book Antiqua",Palatino,Garamond,Georgia,serif;
+    display:flex; flex-direction:column; height:100vh; overflow:hidden;
+  }
+  /* ---- top brand bar ---- */
+  .topbar{display:flex; align-items:center; gap:14px; padding:10px 18px; background:var(--indigo); color:#fff; flex:0 0 auto}
+  .topbar .lf{font-size:20px; line-height:1}
+  .topbar .nm{font-size:17px; font-weight:700; letter-spacing:.02em}
+  .topbar .tag{font-size:12px; background:rgba(255,255,255,.18); padding:3px 9px; border-radius:20px; letter-spacing:.08em; text-transform:uppercase}
+  .topbar .stat{margin-left:auto; font-size:12.5px; opacity:.92; text-align:right; line-height:1.4}
+  .topbar .thm{margin-left:14px; background:rgba(255,255,255,.16); color:#fff; border:none; border-radius:8px; padding:6px 11px; font-size:12.5px; cursor:pointer; font-family:inherit}
+  /* ---- main split ---- */
+  .split{display:flex; flex:1 1 auto; min-height:0}
+  aside{width:316px; flex:0 0 auto; background:var(--cream-2); border-right:1px solid var(--rule); overflow:auto; padding:14px 12px 40px}
+  aside .toctitle{font-size:13px; font-weight:700; color:var(--indigo-2); text-transform:uppercase; letter-spacing:.06em; margin:2px 6px 10px; padding-bottom:6px; border-bottom:1px solid var(--rule)}
+  .tocrow{display:flex; align-items:flex-start; gap:8px; padding:7px 8px; border-radius:8px; cursor:pointer; margin-top:8px}
+  .tocrow:hover{background:var(--panel)}
+  .tocrow.active{background:var(--panel); box-shadow:inset 3px 0 0 var(--gold)}
+  .tocrow input{margin-top:4px; cursor:pointer; accent-color:var(--indigo)}
+  .tocrow .tt{flex:1 1 auto; font-size:15px; line-height:1.3; font-weight:700; color:var(--indigo-2)}
+  .tocrow .tt .ch{display:block; font-size:11px; font-weight:700; color:var(--gold); text-transform:uppercase; letter-spacing:.06em}
+  .tocrow .ww{font-size:11px; color:var(--muted); white-space:nowrap}
+  .tocrow.heard .tt{color:var(--muted)} .tocrow.heard .tt .ch{color:var(--muted)}
+  .subrow{display:flex; align-items:flex-start; gap:7px; font-size:12.7px; color:var(--muted); padding:4px 8px 4px 28px; line-height:1.32; border-radius:6px; cursor:pointer}
+  .subrow:hover{background:var(--panel)}
+  .subrow:hover .stt{color:var(--indigo-2)}
+  .subrow.active{background:var(--panel)}
+  .subrow.active .stt{color:var(--indigo-2); font-weight:700}
+  /* ---- reader ---- */
+  main{flex:1 1 auto; min-width:0; display:flex; flex-direction:column}
+  .bar{display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:10px 16px; background:var(--panel); border-bottom:1px solid var(--rule); flex:0 0 auto}
+  .bar button{font-family:inherit; font-size:14px; border:1px solid var(--rule); background:var(--panel); color:var(--ink); border-radius:9px; padding:7px 11px; cursor:pointer; transition:.12s}
+  .bar button:hover{border-color:var(--gold)}
+  .bar button.play{background:var(--indigo); color:#fff; border-color:var(--indigo); font-weight:700; min-width:104px}
+  .bar button.play:hover{background:var(--indigo-2)}
+  .bar .sep{width:1px; height:24px; background:var(--rule); margin:0 4px}
+  .bar label{font-size:12.5px; color:var(--muted); display:flex; align-items:center; gap:5px}
+  .bar select, .bar input[type=range]{font-family:inherit; font-size:12.5px}
+  .bar .right{margin-left:auto; display:flex; align-items:center; gap:12px}
+  .reader{overflow:auto; padding:30px 0 80px; flex:1 1 auto}
+  .reader .inner{max-width:680px; margin:0 auto; padding:0 28px}
+  .sec-part{font-size:12.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); font-weight:700}
+  h1.sec{color:var(--indigo-2); font-size:30px; margin:.16em 0 .35em; line-height:1.2}
+  .reader h2.subsec{color:var(--indigo-2); font-size:22px; line-height:1.26; margin:1.5em 0 .45em; padding-top:1.1em; border-top:1px solid var(--rule)}
+  #content h2.subsec:first-of-type{border-top:none; padding-top:0; margin-top:.15em}
+  .reader p{font-size:18.5px; line-height:1.68; margin:.7em 0}
+  .reader p.mean{border-left:3px solid var(--gold); padding-left:15px}
+  .reader p.why{border-left:3px solid var(--indigo-2); padding-left:15px; color:var(--muted); font-style:italic}
+  .reader blockquote.sloka{background:var(--indigo-soft); border:1px solid var(--rule); border-left:4px solid var(--gold); border-radius:10px; padding:18px 22px; margin:1.3em 0; text-align:center}
+  .reader blockquote.sloka .vl{display:block; font-style:italic; font-size:20px; color:var(--indigo-2); line-height:1.78}
+  .reader blockquote.sloka cite{display:block; margin-top:10px; font-style:normal; font-size:14px; color:var(--muted); letter-spacing:.05em}
+  .snt{cursor:pointer; border-radius:4px; transition:background .12s}
+  .snt:hover{background:var(--hl)}
+  .snt.on{background:var(--hl); box-shadow:0 0 0 2px var(--hl-edge)}
+  /* ---- notes + pager ---- */
+  .notes{max-width:680px; margin:30px auto 0; padding:24px 28px 0; border-top:1px solid var(--rule)}
+  .notes .lab{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--indigo-2); font-weight:700; margin-bottom:6px}
+  .notes .lab .sv{font-weight:400; color:var(--muted); font-size:12px}
+  .notes textarea{width:100%; min-height:84px; font-family:inherit; font-size:15px; line-height:1.5; padding:11px 13px; border:1px solid var(--rule); border-radius:10px; background:var(--panel); color:var(--ink); resize:vertical}
+  .notes textarea:focus{outline:none; border-color:var(--gold)}
+  .pager{max-width:680px; margin:24px auto 0; padding:0 28px; display:flex; justify-content:space-between; gap:10px}
+  .pager button{font-family:inherit; font-size:14px; border:1px solid var(--rule); background:var(--panel); border-radius:9px; padding:9px 14px; cursor:pointer; color:var(--indigo-2)}
+  .pager button:hover{border-color:var(--gold)}
+  .pager button[disabled]{opacity:.4; cursor:default}
+  @media (max-width:760px){
+    .split{flex-direction:column}
+    aside{width:auto; max-height:34vh; border-right:none; border-bottom:1px solid var(--rule)}
+  }
+  .notes{display:none!important}
+  .topbar .home{margin-left:8px;color:#fff;text-decoration:none;font-size:12.5px;background:rgba(255,255,255,.16);padding:5px 11px;border-radius:8px}
+  .topbar .home:hover{background:rgba(255,255,255,.30)}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="lf">&#9835;</span>
+    <span class="nm">One Mantra Can Change Your Life</span><a class="home" href="index.html">&#8249; Home</a>
+    <span class="tag">Read &amp; Listen</span>
+    <span class="stat" id="stat"></span>
+    <button class="thm" id="btnTheme">Dark</button>
+  </div>
+
+  <div class="split">
+    <aside id="toc"></aside>
+    <main>
+      <div class="bar">
+        <button class="play" id="btnPlay">&#9654; Play</button>
+        <button id="btnStop">&#9632; Stop</button>
+        <span class="sep"></span>
+        <button id="btnPrevS" title="Previous sentence">&#9664; Sent</button>
+        <button id="btnNextS" title="Next sentence">Sent &#9654;</button>
+        <span class="sep"></span>
+        <label><input type="checkbox" id="autoAdv" checked> Auto&#8209;advance parts</label>
+        <div class="right">
+          <label>Speed <input type="range" id="rate" min="0.6" max="3" step="0.05" value="1"></label>
+          <label>Voice <select id="voice"></select></label>
+        </div>
+      </div>
+
+      <div class="reader" id="reader">
+        <div class="inner">
+          <div id="content"></div>
+          <div class="notes">
+            <div class="lab"><span>Notes on this part</span><span class="sv" id="noteSv"></span></div>
+            <textarea id="note" placeholder="Your thoughts on this part&hellip;"></textarea>
+          </div>
+          <div class="pager">
+            <button id="prevCh">&#8249; Previous part</button>
+            <button id="nextCh">Next part &#8250;</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+<script>
+(function(){
+  var P=function(x){return {t:'p',x:x};};
+  var MEAN=function(x){return {t:'mean',x:x};};
+  var WHY=function(x){return {t:'why',x:x};};
+  var SLOKA=function(v,c){return {t:'sloka',v:v,cite:c};};
+
+  var BOOK=[
+    { part:"Part One — The Cry No One Taught You", secs:[
+      { title:"The cry no one taught you", blocks:[
+        P("Somewhere, right now, someone is whispering a name."),
+        P("A mother, when the phone rings too late at night. A man in a waiting room, watching a closed door. A child, frightened in the dark."),
+        P("None of them were trained for it. No one sat them down and taught them. Yet the moment the ground gives way beneath us, a sound rises on its own. Oh God. Help me. A name we half-forgot we knew."),
+        P("Have you noticed that?"),
+        P("You have done it too. We all have. In the worst moment, we do not reach for an argument. We reach for a name."),
+        P("That is where this little book begins. Not with a doctrine. With a cry, the one already inside you.")
+      ]},
+      { title:"What are we really asking for?", blocks:[
+        P("Look closely at all our wanting, and beneath the thousand things, you find only a few."),
+        P("We want the fear to stop."),
+        P("We want to be held."),
+        P("We want to be heard, really heard, by someone who will not leave."),
+        P("We want to know we are not alone in a vast and careless universe."),
+        P("We chase these through money, through people, through noise. And for a while, something works. Then the quiet comes back, and the cry is still there, unanswered."),
+        P("So we decide that is just how life is. We make peace with a low, background ache and call it being grown up."),
+        P("But what if the thing we keep reaching for could actually be reached? Not after years. Not after we finally become good enough. But now, with a single sound.")
+      ]},
+      { title:"A promise, said plainly", blocks:[
+        P("This book makes one claim, and it is a large one."),
+        P("There is a sound which, taken up with even a little sincerity, begins to change a life. It softens fear. It clears the heart. It opens a line to the One we have been calling all along."),
+        P("Not a spell. Not a trick to get rich quick. Something quieter and far bigger, a way to actually reach God. The simplest way ever given to anyone."),
+        P("We will call it, for now, the mantra. One mantra."),
+        P("And the title of this book is not just a pretty phrase. It is meant exactly as it reads. One mantra, truly taken up, can change your life.")
+      ]},
+      { title:"Who this is for", blocks:[
+        P("Let us clear the doorway first, because a crowded doorway turns people away."),
+        P("This book is for the believer and the doubter both. You do not need faith to begin. You need only a little honesty and a little need, and most of us have plenty of both."),
+        P("It is for the busy. It asks no temple, no fixed hour, no special clothes, no language you do not speak. You can begin in traffic."),
+        P("It is for the broken, the addict, the failure, the one who has done things they cannot say aloud. Especially for you. Before these pages end, you will see that this gift was practically made for the ones who believe they are too far gone."),
+        P("And it is for those who already have a God, and a name they love. You will not be asked to trade them for anyone else's. You will be shown, instead, how the name you already hold is far more powerful than you ever guessed."),
+        P("If you are breathing, this is for you.")
+      ]},
+      { title:"Why I can promise so much", blocks:[
+        P("Let me be honest with you, here at the very start."),
+        P("I am not asking you to take my word for any of this. I am not a holy man on a high seat. I am a friend who found something and could not keep quiet about it."),
+        P("Everything in these pages stands on older and surer ground than me, the words of the scriptures, the sages, and the saints who actually did this and were changed by it. I will bring them to you in their own voice, gently. The verse, then its meaning in plain words, then a line on why it matters. You can weigh every claim for yourself."),
+        P("All I ask is the small thing your own cry already asks."),
+        P("Try the name."),
+        P("Turn the page, and let us begin with a strange mercy, why such a heavy age was given such an easy gift.")
+      ]}
+    ]},
+    { part:"Part Two — A Heavy Age, a Light Gift", secs:[
+      { title:"A heavy age", blocks:[
+        P("Let us begin with something you already feel."),
+        P("The world has become heavy."),
+        P("Faster than before, and somehow emptier. We hold a small glass screen that touches the whole earth, and still we feel alone. We have more than our grandparents dreamed of, and less peace than they had. The mind will not sit still. Trust breaks easily. The news frightens us, the days blur, and a low worry hums under everything, even on the good days."),
+        P("You are not imagining it. And you are not weak for feeling it.")
+      ]},
+      { title:"The sages gave this age a name", blocks:[
+        P("Long ago, those who could see further than us said that time moves in great ages, like seasons turning. And they named the one we are living in."),
+        P("They called it Kali-yuga, the age of quarrel and confusion."),
+        P("They described it with unsettling accuracy. An age where memory grows short and life grows shorter. Where the body weakens, the mind scatters, and quarrel comes easily. Where people are anxious, hurried, and rarely at rest. Read their description and it sounds less like an old prophecy and more like this morning's headlines."),
+        P("It would be easy to read all this and lose heart."),
+        P("But here is where the story turns, and it is the most hopeful turn you will ever hear.")
+      ]},
+      { title:"The one good thing about a hard age", blocks:[
+        P("The same sages who named the disease also handed us the cure. And they said something almost shocking about it."),
+        SLOKA(["kaler doṣa-nidhe rājann asti hy eko mahān guṇaḥ","kīrtanād eva kṛṣṇasya mukta-saṅgaḥ paraṁ vrajet"],"Śrīmad-Bhāgavatam 12.3.51"),
+        MEAN("What it means. My dear King, this age of Kali is an ocean of faults, that is true. But it holds one great virtue. Simply by chanting the name of God, a person is freed from all bondage and reaches the supreme."),
+        WHY("Why it is here. It turns the whole thing upside down. The darkness of the age is real, and hidden inside it is a single, brilliant mercy."),
+        P("Sit with that for a moment. The age is admitted to be the worst. And precisely because it is the worst, it was given the easiest, kindest, most powerful gift of all.")
+      ]},
+      { title:"Why so easy?", blocks:[
+        P("In the brighter ages, reaching God was real but hard. One age asked for silent meditation held for years. Another asked for enormous sacrifices that only kings could afford. Another asked for elaborate worship that took a lifetime to learn."),
+        P("Beautiful methods, but for the few. The strong, the rich, the trained, the undistracted."),
+        P("Look at us now. Who has the steadiness to meditate for years? Who can perform grand rituals, or even sit quietly for ten minutes without reaching for the phone?"),
+        P("So for this age, busy, weak, distracted, short on time and faith, the method was made to match. Not harder, to suit a harder age. Easier. The simplest thing a human being can do."),
+        P("Make a sound. Call out a name."),
+        SLOKA(["harer nāma harer nāma harer nāmaiva kevalam","kalau nāsty eva nāsty eva nāsty eva gatir anyathā"],"Bṛhan-nāradīya Purāṇa · Caitanya-caritāmṛta Ādi 17.21"),
+        MEAN("What it means. The holy name, the holy name, the holy name alone. In this age of Kali there is no other way, no other way, no other way."),
+        WHY("Why it is here. Notice the repetition. Three times the name, three times no other way. The scripture is not whispering a suggestion. It is taking you gently by the shoulders and saying, for these times, this is it. This is the way home.")
+      ]},
+      { title:"But is this only for one religion?", blocks:[
+        P("A fair question, and let us answer it plainly, because this gift was never meant to be fenced in."),
+        P("What the sages are pointing to is not the property of one group. It is a principle as open as the air. That sound carries power, and that the name of God carries the most power of all, and that He answers to the name your own heart already trusts."),
+        P("You do not have to leave your faith at the door. You do not have to call yourself anything new. If you already love God by a name, that name is your starting place. We will come, later, to the great name the scriptures sing most often, but no one is asked to trade away the name they hold dear. The door is wide on purpose.")
+      ]},
+      { title:"The gift is for you", blocks:[
+        P("So let this be the first weight lifted."),
+        P("The heaviness you feel is not a sign that you are failing. It is the very air of this age. And the same age that presses on you so hard is the one age that was handed the lightest, surest way to touch the divine."),
+        P("You qualify. Not because you are good enough, but because the gift was designed for exactly the people who think they are not."),
+        P("What is this sound, this name, this mantra we keep circling?"),
+        P("Let us look at it directly.")
+      ]}
+    ]},
+    { part:"Part Three — What Is a Mantra?", secs:[
+      { title:"What is a mantra?", blocks:[
+        P("We keep using the word. Let us stop and look at it, because it has been wrapped in so much fog."),
+        P("When most people hear the word mantra, they picture something exotic. A magic phrase. A secret password to the universe. Something a robed figure hums on a mountain."),
+        P("Set all of that aside. The truth is simpler, and far more useful.")
+      ]},
+      { title:"The word itself", blocks:[
+        P("Mantra is an old Sanskrit word, and like many such words, it hides its meaning in plain sight."),
+        P("It is made of two small parts. Man, which points to the mind, the same root that gives us the word mind itself. And tra, which means to free, to carry across, to protect."),
+        P("Put them together and you get something beautiful. A mantra is that which frees the mind. A sound that carries you across."),
+        P("Across what? Across the very noise we met in the first pages. The worry that will not stop. The fear. The endless inner chatter. A mantra is a sound chosen to lift the mind out of all that and set it somewhere higher."),
+        P("So it is not a spell you cast on the world. It is a sound that works on you.")
+      ]},
+      { title:"Sound is not small", blocks:[
+        P("We have forgotten how powerful sound is. Let me remind you, because you already know it in your body."),
+        P("A song comes on, and without deciding to, your eyes fill with tears. Three notes, and you are eight years old again."),
+        P("Someone says one cruel sentence, and it lives in you for twenty years. Someone says I forgive you, and a weight you carried for a lifetime lifts in a moment."),
+        P("A baby has not learned a single word, yet the sound of its mother's voice calms it instantly."),
+        P("Sound moves things. It changes the body, the mood, the heart. We arrange our whole lives around it. Music to wake, music to pray, music to grieve, music to love."),
+        P("If ordinary sound can do all this, is it so strange that there might be a sound tuned to the highest thing of all?")
+      ]},
+      { title:"Not a wishing-machine", blocks:[
+        P("Let us also clear away a wrong idea, gently, because it traps a lot of sincere people."),
+        P("A mantra is not a coin you put into a machine to get what you want. Chant this many times, receive that car, that job, that revenge. That is superstition wearing a spiritual coat."),
+        P("The promise of this book is bigger than your wishes, not smaller. A true mantra does not just rearrange your circumstances. It rearranges you. And from that, everything else begins to change. The fear loosens. The heart clears. A line opens to the One you are calling."),
+        P("You may well find that your outer life improves. People who find peace usually do. But that is the by-product, not the prize. The prize is the connection itself.")
+      ]},
+      { title:"A sound that calls", blocks:[
+        P("So here is the simplest way to hold it."),
+        P("A mantra is not a phrase you recite. It is a name you call."),
+        P("Think of the difference. You can read the word water a thousand times and stay thirsty. But call out the name of someone who loves you, and they turn, and they come."),
+        P("That is what a mantra truly is. A calling. A sound by which the soul reaches for God, and by which God can be reached in return. Less like a formula, and more like a child in the dark calling the one name that brings the light on."),
+        P("Which raises the most wonderful question of all. If a mantra is a way of calling God by name, then what exactly happens when that name is spoken? Is a holy name only a label, pointing far away to someone distant?"),
+        P("Or is it something much closer than that?"),
+        P("That is the secret of the next part, and it is the heart of everything.")
+      ]}
+    ]},
+    { part:"Part Four — The Name and the Named Are One", secs:[
+      { title:"The name and the named are one", blocks:[
+        P("We have arrived at the secret. The one that turns this little practice from a nice idea into something that can truly change a life."),
+        P("Take your time with this part. If nothing else stays with you, let this stay."),
+        P("Here it is. The name of God is not merely a label for God. The name of God is God Himself, present in sound."),
+        P("When you call His name, He is not far away, hearing it from a distance and deciding whether to come. He is already there, on your lips, in your breath, in the sound itself."),
+        P("Sit with that for a moment, because everything rests on it.")
+      ]},
+      { title:"Why ordinary names fall short", blocks:[
+        P("At first this sounds impossible, and your doubt is fair. We know how names usually work."),
+        P("The word water has never once made anyone wet. You can say fire all day and never feel warm. The word money will not fill an empty pocket. A name is just a sticker we put on a thing, useful, but powerless. The name and the thing are two different items."),
+        P("So when someone says a holy name carries the actual presence of God, the honest mind objects. Surely that is just a word too?"),
+        P("It would be, if God were an ordinary thing. But He is not.")
+      ]},
+      { title:"But God is not ordinary", blocks:[
+        P("This is the heart of it."),
+        P("Everything in our world is split in two. A thing, and the name of the thing. You, and your name. The fire, and the word fire. They are separate, so the word stays empty."),
+        P("God alone is not split. He is what the sages call absolute, undivided. His name, His form, His qualities, and His very self are not separate parts. They are all Him. So unlike every other name, His name is not empty of Him. It is full of Him."),
+        SLOKA(["nāma cintāmaṇiḥ kṛṣṇaś caitanya-rasa-vigrahaḥ","pūrṇaḥ śuddho nitya-mukto 'bhinnatvān nāma-nāminoḥ"],"Padma Purāṇa · Caitanya-caritāmṛta Madhya 17.133"),
+        MEAN("What it means. The holy name is a wish-fulfilling jewel, the Lord Himself, the very form of consciousness and sweetness, complete, pure, eternally free, because the name and the named are not different."),
+        WHY("Why it is here. This is the verse the whole book stands on. It says it plainly. The name and the named are not different. To have the name is to have Him.")
+      ]},
+      { title:"What this means for you", blocks:[
+        P("Let this sink all the way down, because it changes everything about how near God is to you."),
+        P("It means you do not have to climb to God. You do not have to become pure enough first, or learned enough, or good enough, and only then earn an audience. The moment His name is on your tongue, He has already come close. The distance you always assumed was there, it was never there."),
+        P("It means the line is always open. Not only at certain hours. Not only in certain buildings. Not only for certain people. Wherever you are, in whatever state, the instant you sound His name, you are in touch with Him."),
+        P("And it means something tender. Even a faint call counts. Even a distracted, broken, half-believing whisper reaches Him, because it is not the strength of your faith that carries it, but the fullness of His name. We will see, before long, just how far this mercy reaches."),
+        P("So the name your own heart already uses for God is not a small thing. He is present in it. You have been holding a treasure and calling it a pebble.")
+      ]},
+      { title:"Then which name?", blocks:[
+        P("If the name is so full of Him, a beautiful question follows."),
+        P("Of all the names, all the sounds a person could take up, is there one the scriptures press into our hands above the rest? One great sound, tuned for this age, that carries His presence most completely?"),
+        P("There is. And we turn to it next.")
+      ]}
+    ]},
+    { part:"Part Five — Which Name?", secs:[
+      { title:"Which name?", blocks:[
+        P("We left the last part holding a wonderful question."),
+        P("If God is fully present in His name, then of all the names and all the sounds a person might take up, is there one the scriptures place above the rest? One great sound, made for this very age, that carries Him most completely?"),
+        P("There is. And the sages do not make us guess.")
+      ]},
+      { title:"The scriptures press one chant into our hands", blocks:[
+        P("When the wise of old looked ahead to our times, distracted, hurried, short on memory and strength, they did not leave us to wander among a thousand options. They named, again and again, one chant as the great gift for this age. A chant made entirely of the names of God."),
+        P("It is called the maha-mantra. The words mean the great chant for deliverance, the great sound that carries us across."),
+        P("Here it is."),
+        SLOKA(["Hare Kṛṣṇa Hare Kṛṣṇa, Kṛṣṇa Kṛṣṇa Hare Hare","Hare Rāma Hare Rāma, Rāma Rāma Hare Hare"],"the maha-mantra · the great chant for deliverance"),
+        P("Sixteen words. Three names, woven together. That is the whole of it. Nothing to buy, nothing to qualify for, nothing to understand first. You could learn it in a minute and carry it for a lifetime."),
+        P("And the scripture that gives it does not speak softly about it."),
+        SLOKA(["iti ṣoḍaśakaṁ nāmnāṁ kali-kalmaṣa-nāśanam","nātaḥ parataropāyaḥ sarva-vedeṣu dṛśyate"],"Kali-Santaraṇa Upaniṣad"),
+        MEAN("What it means. These sixteen names destroy the contamination of this dark age. In all the Vedas, no higher means than this is to be found."),
+        WHY("Why it is here. It tells us where this chant stands. Not one good practice among many, but the highest the scriptures could point to, for exactly the age we live in.")
+      ]},
+      { title:"What the words mean", blocks:[
+        P("You can chant it knowing nothing of the words, and it will still work, for the reason we saw in the last part. The names are full of Him. But the meaning is sweet, so let me give it to you simply."),
+        P("Two of the words are names of God Himself."),
+        P("Krishna means the all-attractive one, the Lord in His beauty, the source and centre of everything, the one our hearts have always been reaching for."),
+        P("Rama means the reservoir of all joy, the Lord as the happiness we keep chasing in smaller things, finally found in its true home."),
+        P("And Hare is a call to His grace, to the Lord's own loving energy, the tender, motherly side of God that carries the soul back to Him."),
+        P("So the maha-mantra is not a command we place on the universe. It is a call. Said plainly, it means something like this. O my Lord, O sweet attractive one, O joy of all joys, O divine grace, please, take me. Let me be Yours."),
+        P("That is all chanting really is. The cry from the very first page of this book, now given its words.")
+      ]},
+      { title:"The chant the saints themselves chose", blocks:[
+        P("You might still wonder. Of all God's names, why these? Why this particular weave of sound?"),
+        P("Part of the answer is already in your hands. The maha-mantra is made of the Lord's principal names. Krishna, the all-attractive. Rama, the joy of all joys. And Hare, the call to His grace. To chant it is to call Him by His sweetest, fullest names at once. It leaves nothing out."),
+        P("But there is more, and it is worth knowing, because it means you are not improvising alone."),
+        P("About five hundred years ago, in Bengal, a remarkable soul appeared, Sri Chaitanya Mahaprabhu. Those who knew Him best understood Him to be God Himself, come not to rule but to teach by His own example, in the role of His own devotee. And He did one thing above all others. He took this very chant, once kept quietly among the few, and gave it away to everyone. He sang it in the open streets, with music and dancing and tears, and called the whole world to join him, turning no one away for their birth, their past, or their station."),
+        P("The scriptures, it is said, had already foreseen him."),
+        SLOKA(["kṛṣṇa-varṇaṁ tviṣākṛṣṇaṁ sāṅgopāṅgāstra-pārṣadam","yajñaiḥ saṅkīrtana-prāyair yajanti hi su-medhasaḥ"],"Śrīmad-Bhāgavatam 11.5.32 · Caitanya-caritāmṛta Ādi 3.52"),
+        MEAN("What it means. In this age, the intelligent worship, through the sacrifice of the congregational chanting of the holy names, the Lord who ceaselessly sings Krishna's names, whose own complexion is golden, and who comes with His companions."),
+        WHY("Why it is here. The sages point here, the tradition says, to that golden teacher, and to this practice, the shared chanting of God's names, as the wise choice for our times. The maha-mantra is not a thing we made up. It is the chant the saints themselves took up and handed down, soul to soul, to us."),
+        P("So when you chant it, you step into a current already flowing. One that has carried countless ordinary, struggling people all the way home.")
+      ]},
+      { title:"The widest door", blocks:[
+        P("Now, a gentle and important word, because this gift was never meant to be fenced in."),
+        P("The same scripture that hands us this great chant also reminds us how generous God is with His names."),
+        SLOKA(["nāmnām akāri bahudhā nija-sarva-śaktis tatrārpitā","niyamitaḥ smaraṇe na kālaḥ"],"Sri Chaitanya Mahaprabhu · Śikṣāṣṭaka 2"),
+        MEAN("What it means. O Lord, You have countless names, and into each You have poured all Your power. And for chanting them there are no hard rules, and no fixed time."),
+        WHY("Why it is here. Countless names, every one of them full of Him, and no rigid conditions. That is the breadth of the mercy. The door is not narrow."),
+        P("So if the maha-mantra is new to you, or feels far from the path you walk, you need not begin there. You may take up any true name of the Lord. You might chant Om Namo Bhagavate Vasudevaya, or Om Namo Narayanaya, names of the very same God, given in the scriptures and treasured for ages. You might simply say Hare Rama, or Govinda, or Gopala."),
+        P("And if you come from another tradition, another lineage, even another religion entirely, and you already love God by a name your heart trusts, then call Him by that name. He answers to the love, not to the language. Keep your faith. Keep your God. The chanting itself is the universal medicine of this age, and it is yours to take up in whatever true name you hold."),
+        P("Only this, and it is the one thing this little book will keep gently pressing into your hands. Do not let the greatest gift slip past you unnoticed. The maha-mantra is offered to you as the fullest and most complete of all, the one the scriptures and the saints placed above the rest. Begin wherever you honestly can. But know that this chant is here for you, freely, the moment you are ready for it."),
+        P("That is the beauty of it. The door is as wide as the world. The poorest, the busiest, the most broken, the seeker of any faith or none, all may walk through. You can begin today, in your own language of the heart, with these sixteen names or with the name you already love.")
+      ]},
+      { title:"So what does it do?", blocks:[
+        P("We have the secret. The name is the Lord. We have the sound. The great chant for this age. We have seen how wide the door is thrown."),
+        P("One question remains, and it is the one your own life is asking. If I actually take this up, if I begin to chant, what will it do? What changes, in here, in this tired and worried heart, and in the life I have to live tomorrow?"),
+        P("Let us turn to that now.")
+      ]}
+    ]},
+    { part:"Part Six — What One Mantra Does, In This Life", secs:[
+      { title:"What it does, in here", blocks:[
+        P("So you begin. One day, quietly, you start to chant, the great names, or the name your own heart trusts. What happens?"),
+        P("Let us be honest and exact, because you have been promised things before."),
+        P("We said early on that this is not a coin in a machine. Chanting is not a way to order a car or a promotion from the sky. Its gift is bigger than that, and it begins somewhere deeper, not out there in your circumstances, but in here, in the worried heart we met on the very first page."),
+        P("Change the inside, and the outside slowly rearranges itself around the new you. That is the order of it. And the change inside is real, and it has been described, step by step, by one who knew it from within.")
+      ]},
+      { title:"A verse that maps the whole journey", blocks:[
+        P("Five hundred years ago, that golden teacher, Sri Chaitanya Mahaprabhu, left us only eight short verses. The very first is a map of what the holy name does to a human being. Read it slowly."),
+        SLOKA(["ceto-darpaṇa-mārjanaṁ bhava-mahā-dāvāgni-nirvāpaṇaṁ","śreyaḥ-kairava-candrikā-vitaraṇaṁ vidyā-vadhū-jīvanam","ānandāmbudhi-vardhanaṁ prati-padaṁ pūrṇāmṛtāsvādanaṁ","sarvātma-snapanaṁ paraṁ vijayate śrī-kṛṣṇa-saṅkīrtanam"],"Sri Chaitanya Mahaprabhu · Śikṣāṣṭaka 1"),
+        MEAN("What it means. All glory to the chanting of Krishna's names, which cleanses the mirror of the heart, puts out the great forest fire of repeated birth and death, spreads the cooling moonlight of our true good fortune, is the very life of all wisdom, swells the ocean of bliss, gives at every step the full taste of nectar, and bathes the whole self."),
+        WHY("Why it is here. This is the answer to your question, in the words of one who lived it. Everything that follows is just an unfolding of this single verse."),
+        P("Let us walk through it, gently, as it would actually feel.")
+      ]},
+      { title:"First, the mirror is wiped", blocks:[
+        P("The heart, the sages say, is like a mirror. It is meant to reflect, to show us clearly who we are, what matters, what is real. But over the years it gathers dust. Old hurts, fears, a thousand cravings and regrets, the endless noise. The mirror clouds, and we can no longer see ourselves in it. That fog is most of our confusion."),
+        P("Chanting wipes the glass."),
+        P("Not all at once. A little each day, the way a cloth clears a misted window. And as it clears, something quietly returns. You begin to see your own life more truly. The things that gripped you loosen their grip. You become, slowly, a little more like yourself, the self that was always there, under the dust."),
+        P("People rarely announce this. They just notice, after some weeks, that they are reacting less, seeing more, a touch steadier. The mirror is being wiped.")
+      ]},
+      { title:"Then the fire goes quiet", blocks:[
+        P("The verse calls our condition a forest fire. It is a startling image, but you know exactly what it means. The low, constant burn of modern life. The anxiety that never fully switches off. The craving that gets satisfied and immediately relights somewhere else. We have lived in that blaze so long we mistake it for normal."),
+        P("The holy name falls on that fire like cool rain."),
+        P("This is the gift people feel first, and most gratefully. The heat coming down. The worry losing its edge. A breath that finally goes all the way in. Sleep that comes a little easier. Not because your problems all vanished, they may still be there in the morning, but because the fire that made them unbearable has been quieted from within."),
+        P("That worried heart from the first page of this book, this is where it begins to rest.")
+      ]},
+      { title:"And a sweetness rises", blocks:[
+        P("Then comes something stranger and lovelier, and it surprises everyone who reaches it."),
+        P("The verse promises the cooling moonlight of good fortune, an ever-growing ocean of bliss, and at every step the taste of nectar. In plain words, a happiness with no outside reason begins to rise in you."),
+        P("We have only ever known the other kind of happiness, the kind that needs something. A win, a purchase, a person, a piece of good news. It comes, and it leaves, and we go hunting again. This is different. It does not arrive from outside, and it does not depend on the day going well. It simply wells up, quietly, from the contact with Him in the sound, and the whole self is bathed in it."),
+        P("It is faint at first, easy to miss. A moment of unexpected peace mid-chant. A warmth behind the eyes. But it grows. And once you have tasted even a drop of it, the frantic chase for the other kind begins, on its own, to lose its hold.")
+      ]},
+      { title:"How it actually comes to you", blocks:[
+        P("Now, a word to keep your expectations honest and kind, so you are not discouraged."),
+        P("This does not usually arrive in a flash. It comes the way clean comes to a washed cloth, gradually, invisibly, while you simply keep doing the simple thing. Some days you will chant and feel a sweetness. Many days you will feel nothing at all, and your mind will wander the whole time. Do not let those days fool you. The cleansing is happening regardless of whether you feel it, exactly as a bath washes you whether or not you are paying attention."),
+        P("So the practice is not to chase the feelings. It is just to keep calling. The fruits ripen in their own time."),
+        P("And there is this, perhaps the quietest gift of all. From the day you begin, you are no longer alone. In the hard hour, the bad news, the sleepless night, the moment that used to crush you, there is now a name on your lips, and in that name, Him. A companion you can carry anywhere, that no one can take from you. For many, that alone changes everything.")
+      ]},
+      { title:"And after this life?", blocks:[
+        P("This, then, is what one mantra does while you live. The mirror cleared, the fire cooled, the sweetness rising, the loneliness eased."),
+        P("But the scriptures make a far larger claim still. They say the holy name reaches beyond this life altogether, to the very moment we all must one day face, and past it, to where the soul finally goes."),
+        P("That is where we turn next.")
+      ]}
+    ]},
+    { part:"Part Seven — Fruits Beyond Death", secs:[
+      { title:"The one appointment", blocks:[
+        P("There is one appointment none of us will miss."),
+        P("We arrange our whole lives around smaller certainties, the rent, the commute, the weekend, and look away from the one thing that is truly guaranteed. Death. Ours, and the death of everyone we love."),
+        P("This book would be a small thing if it only helped you feel calmer on a Tuesday. Its real claim is larger, and it reaches all the way to that final hour, and past it."),
+        P("So let us not flinch. Let us speak about the end, and what the holy name does there.")
+      ]},
+      { title:"What we carry across", blocks:[
+        P("The scriptures say something about death that is at once simple and immense. The state of mind in which we leave shapes where we go."),
+        SLOKA(["yaṁ yaṁ vāpi smaran bhāvaṁ tyajaty ante kalevaram","taṁ tam evaiti kaunteya sadā tad-bhāva-bhāvitaḥ"],"Bhagavad-gītā 8.6"),
+        MEAN("What it means. Whatever state of being one remembers when he leaves the body, O son of Kunti, that state he will attain without fail."),
+        WHY("Why it is here. It tells us the last moment is not random. What fills the mind as we go, carries us. So the quiet, enormous question of a whole life is this. What will be in your heart at the end?"),
+        P("We cannot carry across our money, our work, our house, not even this body we spent so long tending. All of it stays behind. Only consciousness goes on, and what we have filled it with is what it will reach for.")
+      ]},
+      { title:"The surest help at that hour", blocks:[
+        P("Here, the Lord makes a promise that has steadied the dying for thousands of years."),
+        SLOKA(["anta-kāle ca mām eva smaran muktvā kalevaram","yaḥ prayāti sa mad-bhāvaṁ yāti nāsty atra saṁśayaḥ"],"Bhagavad-gītā 8.5"),
+        MEAN("What it means. Whoever, at the end of life, quits the body remembering Me alone, at once attains My nature. Of this there is no doubt."),
+        WHY("Why it is here. It names the one thing worth holding at the last. Him. And it removes all hedging. No doubt."),
+        P("But here is the tender problem, and the scriptures are honest about it. The final hour is hard. The body fails, the mind clouds, fear crowds in. It is no time to suddenly learn something new. Whatever we have practised all our life is what will rise to our lips then, on its own."),
+        P("This is the deepest reason to chant now. Not only for the peace it gives today, but so that the Name is worn smooth in us, so familiar, so much a part of our breath, that when every other thing falls away, it is still there. The Lord, in the same chapter, says it plainly. Remember Me at all times. We chant through the years so that the Name will be waiting for us at the door."),
+        P("That is the most practical preparation a person can make. And it is free, and it begins today.")
+      ]},
+      { title:"Even a single utterance, the story of Ajamila", blocks:[
+        P("And if you fear you have left it too late, or lived too poorly, there is a story the scriptures tell for you. Hold on to it."),
+        P("There was once a man named Ajamila. Born into a good and pious family, he fell, badly. He abandoned his wife and his duties, took up with a low woman, and spent his years cheating, robbing, and worse. By every account, a wasted life."),
+        P("In his old age he had a youngest son he adored, and he had named the boy Narayana, which is also a name of God. At the very end, as death came and three fierce messengers arrived with ropes to drag him away, the terrified old man cried out for his child. Narayana. He only meant to call his little son to his side."),
+        P("But the name of God is the name of God. The instant it left his lips, the Lord's own messengers appeared and stopped the messengers of death. That one cry, careless, desperate, aimed only at a boy, carried such purity that it loosened the grip of a lifetime of sin. Ajamila was given more time, came to his senses, took up the holy name in earnest, and at last went home to God."),
+        P("Sit with what that means. If the Name, called by accident by one of the most fallen men in all of scripture, could do that, then what must it do for you, who are calling it on purpose?")
+      ]},
+      { title:"And beyond the threshold", blocks:[
+        P("So the Name protects us at the crossing. But cross to where?"),
+        P("Here the scriptures lift our eyes to the largest hope of all. Death, they insist, is not the end of you. The body ends. You do not. You are the soul within it, and the soul is deathless. What we call death is only the soul setting down a worn-out coat."),
+        P("For one who has lived with the Name, that setting-down is not a fall into darkness. It is a going home. Not extinction, not a blank, but arrival. The soul returns to the One it was always calling, into a love that does not end, beyond the long, tired wheel of being born and dying, again and again."),
+        P("That is the final fruit, the one the whole tradition is pointing toward. To step out of this world and into His presence, and not come back to suffering. And the simplest seed of it is the sound you can make right now.")
+      ]},
+      { title:"Is anyone too far gone?", blocks:[
+        P("We have just watched the worst of men saved by a single, accidental syllable of the holy name."),
+        P("It raises a question that deserves a clear answer, because so many people quietly carry the fear that they, in particular, are beyond help. The addict. The betrayer. The one with the unspeakable past. The hardened doubter."),
+        P("Is there anyone the Name will turn away?"),
+        P("Let us answer that next. And the answer is the most generous in this whole book.")
+      ]}
+    ]},
+    { part:"Part Eight — No One Is Turned Away", secs:[
+      { title:"The secret fear", blocks:[
+        P("There is a fear that lives quietly in a great many hearts, and it sounds like this. All of that may be true, but not for me. I am the exception. I have done too much, or too little. I am too far gone, too late, too doubtful, too unclean. The Name may save others. It would not stoop to me."),
+        P("If even a corner of that lives in you, this is the most important part of the book. Read it slowly, and let it do its work."),
+        P("Because the scriptures answer that fear with a generosity so large it is almost hard to believe.")
+      ]},
+      { title:"The most astonishing verse", blocks:[
+        P("Listen to what the sages dared to write down."),
+        SLOKA(["sāṅketyaṁ pārihāsyaṁ vā stobhaṁ helanam eva vā","vaikuṇṭha-nāma-grahaṇam aśeṣāgha-haraṁ viduḥ"],"Śrīmad-Bhāgavatam 6.2.14"),
+        MEAN("What it means. Even if one chants the name of the Lord as a hint for something else, or in jest, or as a tune, or even carelessly, the wise know that it wipes away unlimited sins."),
+        WHY("Why it is here. Read it again, because it is staggering. The name works even when it is not aimed at God at all. Spoken to mean another thing. Said as a joke. Sung as a catchy line. Muttered without a scrap of devotion. Even then it carries its power, because the power is in the Name, not in our worthiness."),
+        P("This is the whole secret of why no one is turned away. If even a careless, half-meant utterance cleanses, then there is no such thing as a person too low to qualify. The qualification was never on our side.")
+      ]},
+      { title:"Even the worst, never lost", blocks:[
+        P("The Lord says it Himself, in the plainest words, in the Gita."),
+        SLOKA(["api cet su-durācāro bhajate mām ananya-bhāk","sādhur eva sa mantavyaḥ samyag vyavasito hi saḥ","kṣipraṁ bhavati dharmātmā śaśvac-chāntiṁ nigacchati","kaunteya pratijānīhi na me bhaktaḥ praṇaśyati"],"Bhagavad-gītā 9.30-31"),
+        MEAN("What it means. Even if a person of the most wicked conduct turns to Me with an undivided heart, he is to be counted among the saintly, for he has set his course rightly. Swiftly he becomes righteous and attains lasting peace. O son of Kunti, declare it boldly. My devotee never perishes."),
+        WHY("Why it is here. My devotee never perishes. Not the well-born one. Not the clean one. The one who simply turns, whatever his past, and does not let go. He is already counted as a saint, and the rest will follow."),
+        P("Now let me show you two lives, so you can see it is not just a promise on a page.")
+      ]},
+      { title:"The robber who could not say the Name, Valmiki", blocks:[
+        P("Long ago there was a highwayman named Ratnakara. He robbed travellers on the forest road and killed without a second thought. His hands were as red as any in this book. One day he tried to rob a wandering sage, who, instead of fear, offered him a question that cracked his life open. All this sin you carry to feed your family, will they carry any of it for you? They would not. And the robber, shaken to his core, fell at the sage's feet and begged for a way out."),
+        P("He was given the simplest thing. Chant the name of God. Rama."),
+        P("But he was so steeped in darkness that he could not even pronounce it. His mouth would not form the holy sound. So the sage, gently, let him chant it the only way he could, backwards and broken. Mara, mara, mara. And the strangest mercy unfolded. Said over and over, mara mara mara becomes Rama Rama Rama. The Name reassembled itself on his ruined tongue."),
+        P("He sat and chanted, year upon year, so still that anthills rose around him. And when at last he emerged, the murderer was gone. In his place sat a sage so pure that he would go on to compose the Ramayana itself, the great scripture of the very Lord whose name had remade him. We know him now as Valmiki."),
+        P("If the Name could lift a killer who could not even say it correctly, it can lift you.")
+      ]},
+      { title:"No bar of birth, Haridasa Thakura", blocks:[
+        P("And lest anyone believe the gift belongs only to those born into the right family, the right caste, the right religion, the scriptures gave us Haridasa."),
+        P("He was born into a Muslim family, outside the priestly fold that the society of his day reserved its holiness for. By the rules of men, he had no claim to the sacred at all. Yet he took up the holy name with such love that he chanted three hundred thousand names of God every single day, and the very saints came to call him Namacharya, the teacher of the holy name. The one the world would have barred became its foremost authority on chanting."),
+        P("They tested him cruelly. He was dragged through twenty-two marketplaces and beaten to make him stop, and he bore it without a trace of anger, lost in the sweetness of the Name. Once, a woman was even sent to ruin his character, and simply by sitting near him and hearing him chant, night after night, her own heart was turned, and she became a devotee herself. Such is the contagious mercy of the Name on the lips of one who loves it."),
+        P("Birth could not bar him. Beating could not stop him. The Name made a teacher of an outcaste, and a saint of a fallen woman.")
+      ]},
+      { title:"So, then, you", blocks:[
+        P("Set these beside the man from the last part, Ajamila, who was saved at death by accidentally calling his son. A killer. An outcaste by birth. A fallen woman. A wasted old sinner. Not one of them was turned away."),
+        P("So hear this plainly, whoever you are as you read it. The Name does not rescue non-believers, sinners, the broken, the addicted, the doubting, the disgraced despite what they are. It rescues them, on purpose, as its very glory. It reached the worst on record. Then what to speak of you, who are not robbing forests or killing on the roads, but quietly holding this little book and wondering if there is a way back?"),
+        P("There is. There always was. You are not the exception you feared you were. You are exactly who the Name came for.")
+      ]},
+      { title:"Then what does it ask of us?", blocks:[
+        P("If the holy name turns no one away, not the killer, not the outcaste, not the dying sinner, then a freeing thought follows close behind."),
+        P("How little it must ask of us. No perfect birth. No spotless past. No mastery, no qualification, not even, as we just saw, correct pronunciation."),
+        P("So what, in the end, does taking up the Name actually require? And how does an ordinary person begin?"),
+        P("Let us turn, at last, to the simple practice itself.")
+      ]}
+    ]},
+    { part:"Part Nine — How to Begin", secs:[
+      { title:"Now, the doing", blocks:[
+        P("After all of that, the secret of the Name, the great chant, the fruits in this life and the next, the mercy that turns no one away, you might expect the practice itself to be complicated. Some difficult technique to master. Some high bar to clear."),
+        P("It is the opposite. The doing is almost embarrassingly simple. You already have everything you need. A voice, or even just a moving of the lips, and a little willingness. That is the whole kit."),
+        P("Let me show you, plainly, how to begin. Today.")
+      ]},
+      { title:"First, the freedom", blocks:[
+        P("Before the how, hear the freedom in it, because this is where most people are surprised."),
+        P("Nearly every spiritual practice comes wrapped in conditions. Be in the right place. Sit at the right hour. Be clean, be ready, be qualified, learn the language. The holy name throws all of that away."),
+        SLOKA(["na deśa-niyamas tatra na kāla-niyamas tathā","nocchiṣṭādau niṣedho 'sti śrī-harer nāmni lubdhaka"],"Padma Purāṇa · cited in Hari-bhakti-vilāsa"),
+        MEAN("What it means. There is no restriction of place, and no restriction of time, and no prohibition about one's condition, in chanting the name of Sri Hari, O hunter."),
+        WHY("Why it is here. Notice who it is spoken to, a hunter, the kind of person the rituals of the day would have shut out entirely. To him the scripture says, none of the usual barriers apply to this. Not where you are. Not when. Not the state you are in."),
+        P("So let it sink in. You can chant in the kitchen, in the car, in your bed, in the bath. At dawn or at midnight. Tired, unwashed, heartbroken, distracted, in the middle of a terrible day. There is no wrong place, no wrong time, no condition that disqualifies you. This was made deliberately so. The medicine for a busy, messy age had to fit a busy, messy life. It fits yours.")
+      ]},
+      { title:"The first way: japa, chanting for yourself", blocks:[
+        P("There are two main ways people chant, and you will likely come to love both. The first is japa, soft, personal chanting, just for you and Him."),
+        P("Many people chant japa on a string of beads, called a mala, traditionally one hundred and eight of them, with one larger bead to mark the start. You hold a bead, say the mantra once, move to the next bead, say it again, and so travel around the whole string. One full circle is called a round. The beads are simply an anchor, something for the restless hands and the restless mind to hold, so that you can give your attention to the sound instead of to counting."),
+        P("But do not let the beads become another barrier. If you have none, chant on the joints of your fingers, or simply set a soft timer and chant for a few minutes. The beads help. They are not required."),
+        P("Start small and real. A few quiet minutes. Or, if you have a mala, a single round to begin, it takes only about ten minutes, and let it grow naturally from there. Japa is the quiet, private heart of the practice, the place where, over time, the sweetness we spoke of begins to rise.")
+      ]},
+      { title:"The second way: kirtan, singing the Names", blocks:[
+        P("The second way is kirtan, singing the holy names aloud, with a tune, alone or together with others."),
+        P("Where japa is private and still, kirtan is open and alive. You give the names a melody, simple or rich, and let yourself sing them. There is nothing to perfect here. You do not need a good voice, the Lord is not auditioning you. You can sing softly to yourself while you wash the dishes, or join others and let the singing carry all of you at once."),
+        P("Kirtan is a gift for the days when the mind is too heavy for quiet japa, when sitting still only stirs the worry. On those days, sing. The melody lifts what the silent heart cannot, and very often the joy sneaks in through the song.")
+      ]},
+      { title:"And in the cracks of the day", blocks:[
+        P("There is a third way, so easy it hardly feels like practice, and it may become your favourite."),
+        P("Chant under your breath in the small, dead spaces of the day. Walking to the bus. Standing in a queue. Stuck in traffic. Stirring a pot. Lying awake at three in the morning when the fears come. All that wasted, waiting time, the Name can quietly fill it."),
+        P("This is the deepest meaning of that line from the Gita we met earlier. Remember Me at all times. Not by adding hours to your day, but by threading the Name through the hours you already have. Bit by bit, the background hum of worry is replaced by the background hum of His name.")
+      ]},
+      { title:"Begin today, exactly this", blocks:[
+        P("Let us make it concrete, so there is nothing left to wonder about. Here is how to start, right now, or first thing tomorrow."),
+        P("Sit down somewhere you can be reasonably undisturbed for five minutes. You do not need to sit in any special way, comfortable is enough. Take one slow breath. Then begin, softly, aloud or in a whisper, to chant the great mantra."),
+        SLOKA(["Hare Kṛṣṇa Hare Kṛṣṇa, Kṛṣṇa Kṛṣṇa Hare Hare","Hare Rāma Hare Rāma, Rāma Rāma Hare Hare"],"the maha-mantra"),
+        P("Or, if you prefer, the name of God your own heart already loves. Say it slowly. Listen to it. When your mind drifts, and it will, gently bring your ear back to the sound. After five minutes, stop."),
+        P("That is it. You have begun. You are now, by every word of this book, a person who chants the holy name."),
+        P("From there, let it grow on its own terms. Pick a regular time, early morning is traditionally the sweetest, the world still quiet, and keep that small appointment with the Name. Add a few minutes, or a round, when it feels natural. Get a mala if you would like one. But none of that is needed to start. The starting is already done, the moment you make the sound.")
+      ]},
+      { title:"The one thing that matters: hear the Name", blocks:[
+        P("If there is any technique at all, it is only this. Hear the Name as you chant it."),
+        P("Not strain, not force, not a furrowed brow. Just let your own ear receive the sound you are making. That is the entire art of it, to chant, and to listen to your chanting."),
+        P("And here is the thing no one tells beginners, so let me tell you plainly. Your mind will wander almost the whole time. You will be three sentences into a memory or a worry before you notice you stopped listening. This is not failure. This is the practice. The practice is not never wander, that is impossible at first. The practice is simply this. The moment you notice you have drifted, gently, without scolding yourself, bring your attention back to the sound. Drift, and return. Drift, and return. Ten thousand times if needed. Each gentle return is the exercise that slowly clears the mirror."),
+        P("So do not chase a perfect, focused chant. Just keep calling, and keep listening as best you can. Quantity ripens, in its own time, into quality. And take heart from this, the Lord Himself holds this humble practice in the very highest regard."),
+        SLOKA(["yajñānāṁ japa-yajño 'smi"],"Bhagavad-gītā 10.25"),
+        MEAN("What it means. Among all sacrifices, I am japa, the soft chanting of the holy name."),
+        WHY("Why it is here. Of every offering a human being can make, the Lord names this quiet repetition as His very own. The simplest practice is also, in His eyes, the highest. You are not doing a small thing.")
+      ]},
+      { title:"Hold the rules lightly", blocks:[
+        P("In time you may hear that there are finer points, ways of chanting more attentively, certain offences to avoid, courtesies to keep. There is wisdom in all of that, and it has its place as your practice deepens."),
+        P("But hear this clearly now, at the start, because it is where many sincere people trip. Do not let any rule become a wall that keeps you from beginning. Chant with care, and with respect, remember, this is a Person, not a slogan, the Lord Himself present in the sound, so call Him as you would call someone you love and honour. That sincerity is enough to begin. The detailed guidelines are for deepening the practice, not for guarding the door against you."),
+        P("We have seen the proof of this with our own eyes in these pages. Valmiki could not even say the Name correctly. Ajamila did not mean it at all. And still it lifted them. So begin imperfectly. Begin distracted. Begin unsure. Just begin.")
+      ]},
+      { title:"Keep the thread", blocks:[
+        P("If there is a single secret to the whole practice, it is not intensity. It is consistency."),
+        P("A few honest minutes every day will carry you further than a marathon of chanting once a month and then nothing. It is the daily thread, small, unbroken, that slowly re-weaves a life. So aim low and steady. A little, every day, kept up."),
+        P("And when you miss a day, and you will, do not turn it into a reason to stop. No guilt, no drama. The Name holds nothing against you. You simply pick up the thread again the next day, as though you had never dropped it. The only real failure is deciding you have failed and walking away. Short of that, you cannot get this wrong.")
+      ]},
+      { title:"In your own name for Him", blocks:[
+        P("And remember, through all of this, what we settled earlier. The maha-mantra is offered to you as the fullest and most complete of chants, but the practice itself is yours to take up in whatever true name of God your heart already trusts. The beads, the singing, the chanting through the day, the listening, the daily thread, all of it works the same, whatever holy name you hold. Keep your faith. Keep your God. Only, now, begin to call on Him by name, out loud, every day.")
+      ]},
+      { title:"You have everything you need", blocks:[
+        P("So that is the whole of it. There is nothing more to acquire, nowhere to go, no one to become first. You have the glory of the Name, the assurance that it will not turn you away, and now the simple method, laid out step by step. Only one thing remains, and it is the one thing only you can do. Make the sound."),
+        P("And yet, I know how the mind works, because it is my mind too, even now, with everything in place, some quiet doubt may still be flickering. Will it really work for me? Is this not too simple? What if I feel nothing?"),
+        P("Those doubts deserve respect, not dismissal. So before we go any further, let us sit with the honest hesitations of a thinking person, and meet each one squarely.")
+      ]}
+    ]},
+    { part:"Part Ten — Honest Doubts", secs:[
+      { title:"A thinking person should have doubts", blocks:[
+        P("I am not going to ask you to switch off your mind. A faith that needs you to stop thinking is not worth much, and besides, the doubts you are feeling are good and honest ones. A thinking person should have them."),
+        P("So let us not paper over them. Let us take the real objections, one by one, and look at each squarely. I will not pretend they are silly. I felt every one of them myself.")
+      ]},
+      { title:"It is too simple to be powerful", blocks:[
+        P("This is usually the first one, and it runs deep in us. The suspicion that anything worthwhile must be hard. That if a thing were really this important, it could not possibly be this easy. Surely salvation cannot cost so little."),
+        P("But look at how life actually works. The most essential things are almost always the simplest. Breathing keeps you alive, and a baby does it without a lesson. A mother's love remakes a child, and it asks for no technique. Water, the plainest thing there is, is what we cannot live a week without."),
+        P("Difficulty is not the same as depth. We have simply been trained to confuse them."),
+        P("And there is a second half to this. The chant is simple to do, but it is not shallow. A child can say it on the first day, and a saint can spend fifty years disappearing into it and still find more. It is simple the way the ocean is simple to step into, and endless to explore. The ease is the doorway. What lies beyond it has no floor."),
+        P("The simplicity, in other words, is not a weakness in the gift. It is the whole mercy of it, the thing that lets it reach a tired, busy, ordinary person like you and me.")
+      ]},
+      { title:"I tried it, and I felt nothing", blocks:[
+        P("Maybe you have already tried, sat for a few minutes, and got up feeling exactly as flat as before. And you concluded, this does not work, at least not for me."),
+        P("Hold on, because this is the most common place people give up, and it rests on a quiet mistake. The belief that feeling is the measure of working."),
+        P("It is not. We said it before, and it bears repeating here. The cleansing happens whether or not you feel it, the way a bath washes you whether or not you notice the water. A medicine works in the bloodstream long before you feel better. The Name is doing its quiet work in you on the empty days just as surely as on the sweet ones."),
+        P("And dryness is not a sign of failure, it is part of the path that everyone walks, even those far ahead of you. The feelings, when they come, come unpredictably and on their own schedule, never on demand. So if you chant and feel nothing, you have not failed. You have simply done the practice on a dry day, which is most days, for everyone. The only way to truly get nothing from it is to stop.")
+      ]},
+      { title:"Isn't this just psychology, a placebo?", blocks:[
+        P("Here is the honest modern doubt, and it deserves an honest answer, not a nervous one."),
+        P("Maybe, you think, it only works because I expect it to. Calm yourself with a repeated word and of course you feel calmer. It is autosuggestion dressed up as the divine."),
+        P("Let us grant the first part freely. Yes, chanting will calm and clear your mind, and some of that is the natural effect of any steady, repeated sound. Good. Take that benefit. It is real, and it is yours, and it already makes a few minutes a day worth your while. On that level alone, you lose nothing by trying."),
+        P("But the claim of this book is larger, and there is a reason it is not mere placebo. A placebo only works if you believe in it. Take away the belief, and the placebo dies. Yet the holy name, as we have seen with our own eyes in these pages, has worked on people who did not believe at all. Ajamila was not chanting in faith, he was calling his son. Valmiki could not even say the Name correctly. The scriptures go so far as to say it works when chanted as a joke, or carelessly, with no faith behind it. That is the exact opposite of a placebo. A placebo needs your belief to function. The holy name does not. Its power is in the Name, not in your expectations, which is precisely why it could save the man who had none."),
+        P("So no. It is not simply your own mind soothing itself. Something is being given to you from the other side of the sound."),
+        P("But I will not ask you to take even that on my word. I will ask you, instead, to test it, and we will come to how, at the end of this chapter.")
+      ]},
+      { title:"Isn't this just escaping from real life?", blocks:[
+        P("Some will worry that all this turning inward is a way of hiding. Chanting in a corner while the bills go unpaid and the real problems wait."),
+        P("It is the very opposite, and the Gita settles it in a single breath. On the battlefield, at the hardest moment of Arjuna's life, the Lord does not tell him to leave and go meditate in a cave. He tells him this."),
+        SLOKA(["tasmāt sarveṣu kāleṣu mām anusmara yudhya ca","mayy arpita-mano-buddhir mām evaiṣyasy asaṁśayaḥ"],"Bhagavad-gītā 8.7"),
+        MEAN("What it means. Therefore, at all times remember Me, and fight. With your mind and intelligence given to Me, you will surely come to Me."),
+        WHY("Why it is here. Remember Me, and fight. Not instead of fighting. Both, together. The holy name was never meant to replace your duties. It was meant to steady the one who carries them."),
+        P("You will still pay the rent, do the work, raise the children, face the hard conversation. Chanting does not lift those from you. What it changes is the person walking into them, clearer, calmer, less ruled by fear. It does not take you out of your life. It gives your life back a steady centre to act from. That is not escape. That is the opposite of escape.")
+      ]},
+      { title:"But I am not even sure I believe in God", blocks:[
+        P("Then you are in good company, and you are welcome here exactly as you are."),
+        P("We said it on the first page, and it still holds. You do not need faith to begin. You need only a little honesty and a little need. Belief is not the ticket you must buy before boarding. For a great many people, belief is what arrives after, awakened, slowly, by the very practice they took up before they had it."),
+        P("Let me say one true thing about myself here, though I will keep my name out of it until the end. I did not come to any of this easily. I was, for a long time, exactly where some of you are now, unconvinced, a little cynical, fairly sure this was comfort for people who needed comforting. I did not begin to chant because I believed. I began half to disprove it, almost as a dare to the empty sky. And it was the chanting itself, not any argument, that slowly turned me around. The faith I could not reason my way into, the Name walked me into, quietly, from the inside."),
+        P("So if belief is missing, do not wait for it. Bring your doubt with you and chant anyway. The Name is not offended by an honest skeptic. It has won over a great many of them.")
+      ]},
+      { title:"So, test it", blocks:[
+        P("Which brings us to the only fair way to settle a question like this."),
+        P("Do not believe me. Do not disbelieve me either. Do the one thing a real doubter, to be honest, is obliged to do. Run the experiment."),
+        P("Give it a fair trial. Not one half-hearted attempt, but a genuine test. Say, a few minutes of chanting every day for two or three weeks, done sincerely, listening to the sound. That is a small price, and you have wasted more time on far less. At the end of it, you will not have to take anyone's word for anything. You will have your own evidence, gathered in the only laboratory that matters here, your own heart."),
+        P("The one approach that is guaranteed to yield nothing is the one many clever people choose. To keep the whole thing at arm's length, and only ever argue about it. The Name does not reveal itself to the spectator. It reveals itself to the one who calls."),
+        P("So call. And see."),
+        P("We are nearly at the end of our little book now. Only the heart of it remains. To gather everything we have said, and come home, at last, to the one small sound that can change a life.")
+      ]}
+    ]},
+    { part:"Part Eleven — Coming Back to One Mantra", secs:[
+      { title:"The whole book, in your hand", blocks:[
+        P("We have come a long way together in these few pages. Before we part, let us stand still for a moment and look back at the path."),
+        P("We began with a cry, the one already inside you, the name that rises on its own in the worst moments. We found that this was not a small thing, that the name of God is not a label, but God Himself, present in sound. We received the great chant, handed down for this very age, and learned what it means. We watched it cleanse the heart and quiet the fire in this life, and carry the soul home in the next. We saw, with our own eyes, that it turns no one away, not the robber, not the outcaste, not the dying sinner. We were given the practice, so simple a child could begin today. And we met, honestly, every doubt that might hold us back."),
+        P("So now there is nothing left to add. Everything has been said. All that remains is to come back to where we started, to the one small sound, and this time, to make it.")
+      ]},
+      { title:"Above all things, the simplest", blocks:[
+        P("You may, in time, do a great deal in your spiritual life. You may read deeply, visit holy places, keep vows, serve others, sit in long meditation. All of it is good, and none of it is forbidden you."),
+        P("But understand this, and let it set you free. You do not have to wait for any of that, and you do not need it to receive the highest gift. The whole of it has been folded, by the mercy of the age, into one thing you can do right now, with nothing in your hands. Of all the paths up the mountain, this is the one that was carried down to you, to your doorstep, to your very lips."),
+        P("The simplest thing is also the complete thing. Hold on to that. When the rest of life is too much, and it will be, you will always have this one sound, and in this one sound, everything.")
+      ]},
+      { title:"The great reversal", blocks:[
+        P("And now, at the end, let me tell you the most beautiful secret of all, the one the whole book has been quietly walking toward."),
+        P("All this time, you have thought of yourself as the seeker. The small one, down here, reaching up toward a great and distant God, hoping to be noticed, hoping to climb close. That is how it begins for all of us."),
+        P("But it is not the truth of what is happening. Turn it over, and see."),
+        P("The moment you take one step toward Him, He is already running toward you. While you fumble to call His name, He has been listening for it since before you were born. You imagined you were chasing a God who might, if you tried hard enough, finally turn around. The secret is that He turned around long ago, and has been coming for you the whole time. The seeker, it turns out, was the one being sought."),
+        P("The scriptures dare to say something almost shocking about how far this goes."),
+        SLOKA(["ahaṁ bhakta-parādhīno hy asvatantra iva dvija","sādhubhir grasta-hṛdayo bhaktair bhakta-jana-priyaḥ"],"Śrīmad-Bhāgavatam 9.4.63"),
+        MEAN("What it means. I am dependent on My devotees. I am not at all independent. Their pure, desireless hearts have captured Me, so I dwell only there. And dear to Me, too, is even the devotee of My devotee."),
+        WHY("Why it is here. Read it slowly, because it is hardly believable. The Lord of everything says that He is bound, to the ones who simply love Him and call on Him. You set out to win Him. And here He is, saying that you already have. The all-powerful one has made Himself, willingly, the property of anyone who will call His name.")
+      ]},
+      { title:"What one small sound can buy", blocks:[
+        P("This is why the title of this book is not a sweet exaggeration."),
+        P("You could not buy the Lord of all the worlds with a mountain of gold, or with years of terrible penance, or with the cleverness of a great mind. Kings and sages have tried. But a single name, His own name, offered with even a little love, wins Him completely. The richest being there is, who needs nothing from anyone, has chosen to be caught by the cheapest thing in the world. A sound, freely made, by a heart that turns to Him."),
+        P("That is the whole arithmetic of it. One small sound, and the One who owns everything is yours. It is the best bargain in all creation, and it is offered to you, today, at no price you cannot pay.")
+      ]},
+      { title:"So, come home", blocks:[
+        P("So here we are, back at the beginning, at the cry, the one name, the single sound. Only now you know what it is, and what it does, and Who is waiting inside it."),
+        P("There is nothing more for these pages to give you. The rest is not written, it is sounded. Close the book, in a moment, and say the Name, out loud, or under your breath, the great mantra or your own dear name for God. And then say it again tomorrow, and the day after, a little thread through your days. And let your life, quietly, begin to gather itself around that one small, world-changing sound."),
+        P("You came to these pages carrying a cry you did not know what to do with. You leave them knowing. May the Name you now hold carry you all the way, through this life, past its final hour, and home. You were never as far from Him as you feared. You were only one sound away."),
+        P("One mantra can change your life. Now you know it is true. The only thing left is to begin.")
+      ]},
+      { title:"One last thing", blocks:[
+        P("Before you go, there is one more voice you have not properly heard. Mine."),
+        P("I have stayed deliberately in the shadows through all of this, and I owe you an explanation for that, and a few honest words besides. So turn one more page, and let me, at last, step out from behind the book.")
+      ]}
+    ]},
+    { part:"Part Twelve — A Word from the Author", secs:[
+      { title:"A word from the author", blocks:[
+        P("Just a few words before we part."),
+        P("I have stayed hidden through this whole book, on purpose, and I owe you a short word about why."),
+        P("This gift is not mine. I did not make the holy name, or earn it, or give it its power. I only received it, passed down by saints and teachers across the ages, and I have done no more than place it into your hands, as it was placed into mine. To sign my own name across a treasure I merely carried would not be right."),
+        P("And I would rather you weigh the gift, not the giver. Look past me, to the Name itself. That is where all the power is, and it will never disappoint you."),
+        P("So I will say little about myself. I am no teacher and no saint, only a grateful servant who found something too good to keep quiet about, and turned around to share it. If even one of these pages helps you take up the Name, it has done its work, and I am glad."),
+        P("May the Name you now hold never leave you. May it quiet your fears, clear your heart, and carry you home at the end. You were only ever one sound away.")
+      ]},
+      { title:"My signature", blocks:[
+        P("I will sign only what I pray, one day, to truly become. The servant at the feet of the devotees of the Lord, of Krishna, who is the true friend of the fallen."),
+        P("Dina Bandhu Bhakta Charan Sevak."),
+        P("And I leave you, as I found you, with the sound that began it all."),
+        SLOKA(["Hare Kṛṣṇa Hare Kṛṣṇa, Kṛṣṇa Kṛṣṇa Hare Hare","Hare Rāma Hare Rāma, Rāma Rāma Hare Hare"],"the maha-mantra")
+      ]}
+    ]}
+  ];
+
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+  function splitSents(t){return t.replace(/\s+/g,' ').trim().split(/(?<=[.!?])\s+(?=[A-Z"'(])/);}
+  function partKick(s){return s.split('—')[0].trim();}
+  function partTitle(s){return s.split('—').slice(1).join('—').trim();}
+  function partWords(p){var n=0;BOOK[p].secs.forEach(function(sec){n+=sec.title.split(/\s+/).length;sec.blocks.forEach(function(b){if(b.t!=='sloka')n+=b.x.split(/\s+/).length;});});return n;}
+
+  var synth=window.speechSynthesis;
+  var content=document.getElementById('content'), reader=document.getElementById('reader'), aside=document.getElementById('toc');
+  var stat=document.getElementById('stat'), noteEl=document.getElementById('note'), noteSv=document.getElementById('noteSv');
+  var btnPlay=document.getElementById('btnPlay'), autoAdv=document.getElementById('autoAdv'), rateEl=document.getElementById('rate'), voiceEl=document.getElementById('voice');
+  var curPart=0, sents=[], idx=0, speaking=false, paused=false, curU=null, rate=1;
+
+  /* ---------- TOC ---------- */
+  function buildTOC(){
+    var h='<div class="toctitle">Contents</div>';
+    BOOK.forEach(function(part,p){
+      var heard=localStorage.getItem('om_heard_p'+p)==='1';
+      h+='<div class="tocrow'+(heard?' heard':'')+'" data-p="'+p+'">'
+        +'<input type="checkbox" class="phd" data-p="'+p+'"'+(heard?' checked':'')+'>'
+        +'<div class="tt"><span class="ch">'+esc(partKick(part.part))+'</span>'+esc(partTitle(part.part))+'</div>'
+        +'<span class="ww">'+partWords(p)+' w</span></div>';
+      part.secs.forEach(function(sec,si){
+        h+='<div class="subrow" data-p="'+p+'" data-s="'+si+'"><span class="stt">'+esc(sec.title)+'</span></div>';
+      });
+    });
+    aside.innerHTML=h;
+    aside.querySelectorAll('.tocrow').forEach(function(r){
+      r.addEventListener('click',function(e){ if(e.target.classList.contains('phd'))return; loadPart(+r.dataset.p,false); });
+    });
+    aside.querySelectorAll('.phd').forEach(function(cb){
+      cb.addEventListener('click',function(e){ e.stopPropagation(); var p=+cb.dataset.p; localStorage.setItem('om_heard_p'+p, cb.checked?'1':'0'); aside.querySelector('.tocrow[data-p="'+p+'"]').classList.toggle('heard',cb.checked); });
+    });
+    aside.querySelectorAll('.subrow').forEach(function(sr){
+      sr.addEventListener('click',function(){ var p=+sr.dataset.p, s=+sr.dataset.s; if(p!==curPart){ loadPart(p,false); } var h2=content.querySelector('#sec-'+p+'-'+s); if(h2) h2.scrollIntoView({block:'start',behavior:'smooth'}); });
+    });
+  }
+  function setActiveTOC(){
+    aside.querySelectorAll('.tocrow').forEach(function(r){ r.classList.toggle('active', +r.dataset.p===curPart); });
+  }
+
+  /* ---------- render a part ---------- */
+  function partHTML(p){
+    var part=BOOK[p];
+    var h='<div class="sec-part">'+esc(partKick(part.part))+'</div><h1 class="sec">'+esc(partTitle(part.part))+'</h1>';
+    part.secs.forEach(function(sec,si){
+      h+='<h2 class="subsec" id="sec-'+p+'-'+si+'"><span class="snt" data-s="'+si+'">'+esc(sec.title)+'</span></h2>';
+      sec.blocks.forEach(function(b){
+        if(b.t==='sloka'){
+          h+='<blockquote class="sloka">'+b.v.map(function(l){return '<span class="vl">'+esc(l)+'</span>';}).join('')+'<cite>— '+esc(b.cite)+'</cite></blockquote>';
+        } else {
+          var cls=b.t==='mean'?' class="mean"':b.t==='why'?' class="why"':'';
+          h+='<p'+cls+'>'+splitSents(b.x).map(function(s){return '<span class="snt" data-s="'+si+'">'+esc(s)+'</span> ';}).join('')+'</p>';
+        }
+      });
+    });
+    return h;
+  }
+  function loadPart(p,autoplay){
+    curU=null; if(synth) synth.cancel(); speaking=false; paused=false;
+    curPart=clamp(p,0,BOOK.length-1);
+    content.innerHTML=partHTML(curPart);
+    sents=[];
+    content.querySelectorAll('.snt').forEach(function(el){ var i=sents.length; sents.push({text:el.textContent,el:el,s:+el.dataset.s}); el.addEventListener('click',function(){ speakFrom(i); }); });
+    idx=0;
+    noteEl.value=localStorage.getItem('om_note_p'+curPart)||''; noteSv.textContent='';
+    setActiveTOC();
+    document.getElementById('prevCh').disabled=curPart===0;
+    document.getElementById('nextCh').disabled=curPart===BOOK.length-1;
+    reader.scrollTop=0;
+    localStorage.setItem('om_part',curPart);
+    setPlayUI(); paint();
+    if(autoplay) speakFrom(0);
+  }
+
+  /* ---------- player ---------- */
+  function curVoice(){ var id=localStorage.getItem('om_voice'); if(!id)return null; var vs=synth?synth.getVoices():[]; for(var i=0;i<vs.length;i++) if(vs[i].name===id) return vs[i]; return null; }
+  function setPlayUI(){ btnPlay.innerHTML=(speaking&&!paused)?'&#10073;&#10073; Pause':'&#9654; Play'; }
+  function paint(){
+    sents.forEach(function(o,i){ o.el.classList.toggle('on', i===idx); });
+    var o=sents[idx];
+    if(o){
+      var r=o.el.getBoundingClientRect(), rr=reader.getBoundingClientRect();
+      if(r.top<rr.top+70||r.bottom>rr.bottom-40){ o.el.scrollIntoView({block:'center',behavior:'smooth'}); }
+      aside.querySelectorAll('.subrow').forEach(function(sr){ sr.classList.toggle('active', +sr.dataset.p===curPart && +sr.dataset.s===o.s); });
+    }
+    stat.innerHTML='Part '+(curPart+1)+' of '+BOOK.length+'<br>'+(sents.length?(idx+1)+' / '+sents.length+' lines':'');
+  }
+  function speakFrom(i){
+    if(!synth||!sents.length) return;
+    curU=null; synth.cancel();
+    idx=clamp(i,0,sents.length-1);
+    var u=new SpeechSynthesisUtterance(sents[idx].text);
+    u.rate=rate; var v=curVoice(); if(v)u.voice=v;
+    u.onend=function(){
+      if(u!==curU) return;
+      if(idx<sents.length-1){ speakFrom(idx+1); }
+      else if(autoAdv.checked && curPart<BOOK.length-1){ loadPart(curPart+1,true); }
+      else { speaking=false; paused=false; setPlayUI(); }
+    };
+    curU=u; speaking=true; paused=false; synth.speak(u); setPlayUI(); paint();
+    localStorage.setItem('om_part',curPart); localStorage.setItem('om_idx',idx);
+  }
+  function playPause(){
+    if(!synth) return;
+    if(speaking && !paused){ paused=true; synth.pause(); setPlayUI(); }
+    else if(speaking && paused){ paused=false; synth.resume(); setPlayUI(); }
+    else { speakFrom(idx); }
+  }
+  function stop(){ curU=null; if(synth) synth.cancel(); speaking=false; paused=false; setPlayUI(); }
+  function jump(i){ i=clamp(i,0,sents.length-1); if(speaking&&!paused){ speakFrom(i); } else { idx=i; paint(); localStorage.setItem('om_idx',idx); } }
+
+  btnPlay.addEventListener('click',playPause);
+  document.getElementById('btnStop').addEventListener('click',stop);
+  document.getElementById('btnPrevS').addEventListener('click',function(){ jump(idx-1); });
+  document.getElementById('btnNextS').addEventListener('click',function(){ jump(idx+1); });
+  document.getElementById('prevCh').addEventListener('click',function(){ if(curPart>0) loadPart(curPart-1,false); });
+  document.getElementById('nextCh').addEventListener('click',function(){ if(curPart<BOOK.length-1) loadPart(curPart+1,false); });
+  rateEl.addEventListener('input',function(){ rate=parseFloat(rateEl.value); if(speaking&&!paused) speakFrom(idx); });
+  noteEl.addEventListener('input',function(){ localStorage.setItem('om_note_p'+curPart,noteEl.value); noteSv.textContent='saved'; setTimeout(function(){noteSv.textContent='';},1200); });
+
+  /* ---------- voices ---------- */
+  function loadVoices(){
+    var vs=synth?synth.getVoices():[]; var en=vs.filter(function(v){return /^en/i.test(v.lang);}); if(!en.length)en=vs;
+    voiceEl.innerHTML=''; en.forEach(function(v){ var o=document.createElement('option'); o.value=v.name; o.textContent=v.name.replace(/Microsoft|Google|Online|\(Natural\)/gi,'').trim()+' ('+v.lang+')'; voiceEl.appendChild(o); });
+    var saved=localStorage.getItem('om_voice'); if(saved)voiceEl.value=saved;
+  }
+  voiceEl.addEventListener('change',function(){ localStorage.setItem('om_voice',voiceEl.value); if(speaking&&!paused) speakFrom(idx); });
+  if(synth){ loadVoices(); if(typeof synth.onvoiceschanged!=='undefined') synth.onvoiceschanged=loadVoices; }
+
+  /* ---------- theme ---------- */
+  var tb=document.getElementById('btnTheme');
+  function applyTheme(t){ if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');tb.textContent='Light';}else{document.documentElement.removeAttribute('data-theme');tb.textContent='Dark';} }
+  applyTheme(localStorage.getItem('om_theme')||'light');
+  tb.addEventListener('click',function(){ var t=(localStorage.getItem('om_theme')==='dark')?'light':'dark'; localStorage.setItem('om_theme',t); applyTheme(t); });
+
+  /* ---------- keepalive (Chrome cuts long TTS) ---------- */
+  setInterval(function(){ try{ if(speaking&&!paused&&synth&&!synth.paused){ synth.resume(); } }catch(e){} },8000);
+  window.addEventListener('beforeunload',function(){ if(synth) synth.cancel(); });
+
+  /* ---------- init ---------- */
+  buildTOC();
+  rate=parseFloat(rateEl.value)||1;
+  var startPart=parseInt(localStorage.getItem('om_part')||'0',10); if(isNaN(startPart)||startPart<0||startPart>=BOOK.length)startPart=0;
+  loadPart(startPart,false);
+  var savedIdx=parseInt(localStorage.getItem('om_idx')||'0',10); if(!isNaN(savedIdx)){ idx=clamp(savedIdx,0,sents.length-1); paint(); }
+})();
+</script>
+</body>
+</html>
